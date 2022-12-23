@@ -194,7 +194,7 @@ void btif_ahim_update_current_profile(uint8_t profile)
 
   LOG(INFO) << __func__ << ": Current active profile: "<< cur_active_profile;
 }
-void btif_ahim_process_request(tA2DP_CTRL_CMD cmd, uint8_t profile, 
+void btif_ahim_process_request(tA2DP_CTRL_CMD cmd, uint8_t profile,
                                uint8_t direction) {
   if (btif_check_dual_mode()) {
     btif_ahim_process_request_DM(cmd, profile, direction);
@@ -442,6 +442,7 @@ bool btif_ahim_is_hal_2_0_supported() {
 }
 
 bool btif_ahim_is_qc_hal_enabled() {
+  LOG(ERROR) << __func__ << " is_qc_hal_available " << bluetooth::audio::a2dp::is_qc_hal_enabled();
   return bluetooth::audio::a2dp::is_qc_hal_enabled();
 }
 
@@ -450,6 +451,7 @@ bool btif_ahim_is_qc_lea_enabled() {
 }
 
 bool btif_ahim_is_aosp_aidl_hal_enabled() {
+  LOG(ERROR) << __func__ << " is_aidl_hal_available " << bluetooth::audio::aidl::a2dp::is_aidl_hal_available();
   return bluetooth::audio::aidl::a2dp::is_aidl_hal_available();
 }
 

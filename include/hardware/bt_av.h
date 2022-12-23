@@ -60,7 +60,9 @@ typedef enum {
   BTAV_A2DP_CODEC_INDEX_SOURCE_APTX_ADAPTIVE =
                                  BTAV_A2DP_CODEC_INDEX_SOURCE_MAX,
   BTAV_A2DP_CODEC_INDEX_SOURCE_APTX_TWS,
-
+  BTAV_A2DP_CODEC_INDEX_SOURCE_LHDCV3,
+  BTAV_A2DP_CODEC_INDEX_SOURCE_LHDCV2,
+  BTAV_A2DP_CODEC_INDEX_SOURCE_LHDCV5,
   BTAV_A2DP_QVA_CODEC_INDEX_SOURCE_MAX,
 
   BTAV_A2DP_CODEC_INDEX_SINK_MIN =
@@ -188,6 +190,18 @@ typedef struct {
     btav_audio_sink_config_callback audio_config_cb;
 } btav_sink_callbacks_t;
 
+/** Savitech LHDC_EXT_API -- START
+ *  Structure for LHDC Extended API data
+ */
+typedef struct {
+  RawAddress bd_addr;
+  int clen;
+  char* pData;
+} btif_av_codec_lhdc_api_data_t;
+// Savitech LHDC_EXT_API -- END
+
+
+
 /**
  * NOTE:
  *
@@ -228,6 +242,21 @@ typedef struct {
 
     /** Closes the interface. */
     void  (*cleanup)( void );
+
+    // Savitech LHDC_EXT_API -- START
+    int (*getApiVer_lhdc)(   /* mapping to lhdc_getApiVer_src */
+      const RawAddress& bd_addr, char* version, int clen);
+
+    int (*getApiCfg_lhdc)(   /* mapping to lhdc_getApiCfg_src */
+      const RawAddress& bd_addr, char* config, int clen);
+
+    int (*setApiCfg_lhdc)(   /* mapping to lhdc_setApiCfg_src */
+      const RawAddress& bd_addr, char* config, int clen);
+
+    void (*setAPiData_lhdc)( /* mapping to lhdc_setApiData_src */
+      const RawAddress& bd_addr, char* data, int clen);
+    // Savitech LHDC_EXT_API -- END
+
 
 } btav_source_interface_t;
 

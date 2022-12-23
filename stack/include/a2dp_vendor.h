@@ -210,4 +210,9 @@ bool A2DP_VendorDumpCodecInfo(const uint8_t* p_codec_info);
 // and returns proper status.
 tA2DP_STATUS A2DP_VendorIsCodecConfigMatch(const uint8_t* p_codec_info);
 
+void* A2DP_VendorCodecLoadExternalLib(const std::string& lib_name,
+                                      const std::string& friendly_name);
+
+
+
 #endif  // A2DP_VENDOR_H

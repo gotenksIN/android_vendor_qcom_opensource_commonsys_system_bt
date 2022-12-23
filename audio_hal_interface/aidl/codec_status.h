@@ -83,6 +83,11 @@ bool A2dpLdacToHalConfig(CodecConfiguration* codec_config,
                          A2dpCodecConfig* a2dp_config);
 bool A2dpAptxAdaptiveToHalConfig(CodecConfiguration* codec_config,
                          A2dpCodecConfig* a2dp_config);
+// Savitech Patch - START  Offload
+bool A2dpLhdcv5ToHalConfig(CodecConfiguration* codec_config,
+                           A2dpCodecConfig* a2dp_config);
+// Savitech Patch - END
+
 
 bool a2dp_is_audio_codec_config_params_changed_aidl(
                        CodecConfiguration* codec_config, A2dpCodecConfig* a2dp_config);

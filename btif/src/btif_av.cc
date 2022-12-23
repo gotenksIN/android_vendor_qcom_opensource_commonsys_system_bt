@@ -5680,6 +5680,90 @@ static bt_status_t select_audio_device(RawAddress *bd_addr)
 }
 #endif
 
+// Savitech LHDC_EXT_API -- START
+static int lhdc_getApiVer_src(
+    const RawAddress& peer_address,
+    char* version, int clen) {
+
+  int status = BT_STATUS_NOT_READY;
+
+  // TODO: Is it necessary?
+  //if (!btif_av_source.Enabled()) {
+  //  LOG(WARNING) << __func__ << ": BTIF AV Source is not enabled";
+  //  return BT_STATUS_NOT_READY;
+  //}
+
+  status = btif_a2dp_source_encoder_LHDC_user_ApiVer_retrieve_req(peer_address, version, clen);
+
+  if (status != BT_STATUS_SUCCESS) {
+    LOG(WARNING) << __func__ << ": BTIF AV Source fails to config LHDC codec";
+  }
+
+  return status;
+}
+
+static int lhdc_getApiCfg_src(
+    const RawAddress& peer_address,
+    char* config, int clen) {
+
+  int status = BT_STATUS_NOT_READY;
+
+  //if (!btif_av_source.Enabled()) {
+  //  LOG(WARNING) << __func__ << ": BTIF AV Source is not enabled";
+  //  return BT_STATUS_NOT_READY;
+  //}
+
+  status = btif_a2dp_source_encoder_LHDC_user_config_retrieve_req(peer_address, config, clen);
+
+  if (status != BT_STATUS_SUCCESS) {
+    LOG(WARNING) << __func__ << ": BTIF AV Source fails to config LHDC codec";
+  }
+
+  return status;
+}
+
+static int lhdc_setApiCfg_src(
+    const RawAddress& peer_address,
+    char* config, int clen) {
+
+  int status = BT_STATUS_NOT_READY;
+
+  //if (!btif_av_source.Enabled()) {
+  //  LOG(WARNING) << __func__ << ": BTIF AV Source is not enabled";
+  //  return BT_STATUS_NOT_READY;
+  //}
+
+  status = btif_a2dp_source_encoder_LHDC_user_config_update_req(peer_address, config, clen);
+
+  if (status != BT_STATUS_SUCCESS) {
+    LOG(WARNING) << __func__ << ": BTIF AV Source fails to config LHDC codec";
+  }
+
+  return status;
+}
+
+static void lhdc_setApiData_src(
+    const RawAddress& peer_address,
+    char* data, int clen) {
+
+  //if (!btif_av_source.Enabled()) {
+  //  LOG(WARNING) << __func__ << ": BTIF AV Source is not enabled";
+  //  return;
+  //}
+
+  btif_av_codec_lhdc_api_data_t codec_data;
+  memcpy(&codec_data.bd_addr, (uint8_t *)&peer_address, sizeof(RawAddress));
+  codec_data.clen = clen;
+  codec_data.pData = data;
+
+  btif_transfer_context(btif_a2dp_source_encoder_LHDC_user_data_update_req, 0,
+                          (char *)&codec_data, sizeof(codec_data), NULL);
+
+  return;
+}
+// Savitech LHDC_EXT_API -- END
+
+
 static const btav_source_interface_t bt_av_src_interface = {
     sizeof(btav_source_interface_t),
     init_src,
@@ -5689,6 +5773,12 @@ static const btav_source_interface_t bt_av_src_interface = {
     set_active_device,
     codec_config_src,
     cleanup_src,
+    // Savitech LHDC_EXT_API -- START
+    lhdc_getApiVer_src,
+    lhdc_getApiCfg_src,
+    lhdc_setApiCfg_src,
+    lhdc_setApiData_src,
+    // Savitech LHDC_EXT_API -- END
 #ifdef BT_AV_SHO_FEATURE
     allow_connection,
     select_audio_device,
@@ -6917,10 +7007,10 @@ bool btif_av_is_split_a2dp_enabled() {
     }
 
     if(A2DP_IsCodecEnabledInOffload(a2dpCodecConfig->codecIndex())) {
-      BTIF_TRACE_DEBUG("%s:  going for split ", __func__);
+      BTIF_TRACE_ERROR("%s:  going for split ", __func__);
       return true;
     } else if(A2DP_IsCodecEnabledInSoftware(a2dpCodecConfig->codecIndex())) {
-      BTIF_TRACE_DEBUG("%s:  going for non split ", __func__);
+      BTIF_TRACE_ERROR("%s:  going for non split ", __func__);
       return false;
     } else {
       BTIF_TRACE_ERROR("%s: current codec is not enabled either of modes"

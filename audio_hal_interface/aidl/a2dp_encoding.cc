@@ -68,6 +68,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 #include <a2dp_vendor.h>
 #include "controller.h"
 #include "a2dp_vendor_ldac_constants.h"
+#include "a2dp_vendor_lhdc_constants.h"
 //#include "a2dp_vendor_aptx_adaptive.h"
 #include "a2dp_aac.h"
 #include "btif_ahim.h"
@@ -97,6 +98,7 @@ using ::bluetooth::audio::aidl::codec::A2dpCodecToHalSampleRate;
 using ::bluetooth::audio::aidl::codec::A2dpLdacToHalConfig;
 using ::bluetooth::audio::aidl::codec::A2dpSbcToHalConfig;
 using ::bluetooth::audio::aidl::codec::A2dpAptxAdaptiveToHalConfig;
+using ::bluetooth::audio::aidl::codec::A2dpLhdcv5ToHalConfig;
 
 /***
  *
@@ -254,6 +256,8 @@ BluetoothAudioSinkClientInterface* software_hal_interface = nullptr;
 BluetoothAudioSinkClientInterface* offloading_hal_interface = nullptr;
 BluetoothAudioSinkClientInterface* active_hal_interface = nullptr;
 auto session_type = SessionType::UNKNOWN;
+btav_a2dp_codec_index_t sw_codec_type = BTAV_A2DP_CODEC_INDEX_SOURCE_MIN;
+
 
 // Save the value if the remote reports its delay before this interface is
 // initialized
@@ -326,6 +330,15 @@ bool a2dp_get_selected_hal_codec_config(CodecConfiguration* codec_config) {
       }
 	  break;
     }
+    case BTAV_A2DP_CODEC_INDEX_SOURCE_LHDCV2:
+      [[fallthrough]];
+    case BTAV_A2DP_CODEC_INDEX_SOURCE_LHDCV3:
+      [[fallthrough]];
+    case BTAV_A2DP_CODEC_INDEX_SOURCE_LHDCV5:
+      if (!A2dpLhdcv5ToHalConfig(codec_config, a2dp_config)) {
+        return false;
+      }
+      break;
     case BTAV_A2DP_CODEC_INDEX_MAX:
       [[fallthrough]];
     default:
@@ -376,6 +389,9 @@ bool a2dp_get_selected_hal_codec_config(CodecConfiguration* codec_config) {
     if ((A2DP_VendorCodecGetVendorId(p_codec_info)) == A2DP_LDAC_VENDOR_ID) {
       codec_config->encodedAudioBitrate = A2DP_GetTrackBitRate(p_codec_info);
       LOG(INFO) << __func__ << "AIDL LDAC bitrate" << codec_config->encodedAudioBitrate;
+    } else if ((A2DP_VendorCodecGetVendorId(p_codec_info)) == A2DP_LHDC_VENDOR_ID) {
+      codec_config->encodedAudioBitrate = A2DP_GetTrackBitRate(p_codec_info);
+      LOG(INFO) << __func__ << "AIDL LHDC bitrate" << codec_config->encodedAudioBitrate;
     } else {
       /* BR = (Sampl_Rate * PCM_DEPTH * CHNL)/Compression_Ratio */
       int bits_per_sample = 16; // TODO
@@ -576,8 +592,13 @@ SessionType get_session_type() {
       return SessionType::UNKNOWN;
     }
     if (active_hal_interface) {
-       return active_hal_interface->GetTransportInstance()->GetSessionType();
-    } else return SessionType::UNKNOWN;
+        SessionType session_type = active_hal_interface->GetTransportInstance()->GetSessionType();
+        LOG(ERROR) << __func__ << ": Session type is " << (int) session_type;
+        return session_type;
+    } else {
+        LOG(ERROR) << __func__ << ": Session type is UNKNOWN";
+        return SessionType::UNKNOWN;
+    }
 }
 
 
@@ -594,6 +615,14 @@ bool is_restart_session_needed() {
       return codec::a2dp_is_audio_codec_config_params_changed_aidl(&codec_config_global, a2dp_config);
   } else if (active_hal_interface->GetTransportInstance()->GetSessionType() ==
       SessionType::A2DP_SOFTWARE_ENCODING_DATAPATH) {
+	  if (a2dp_config != nullptr) {
+          btav_a2dp_codec_config_t current_codec = a2dp_config->getCodecConfig();
+          LOG(ERROR) << __func__ << " old: " << sw_codec_type << ", new: " <<  current_codec.codec_type;
+          if(sw_codec_type != current_codec.codec_type) {
+            LOG(ERROR) << __func__ << ": codec differed ";
+            return true;
+          }
+      }
       return codec::a2dp_is_audio_pcm_config_params_changed_aidl(&pcm_config_global, a2dp_config);
   }
   return true;
@@ -628,6 +657,7 @@ bool setup_codec() {
   if (active_hal_interface->GetTransportInstance()->GetSessionType() ==
       SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
     audio_config.set<AudioConfiguration::a2dpConfig>(codec_config);
+    sw_codec_type = BTAV_A2DP_CODEC_INDEX_SOURCE_MIN;
   } else {
     PcmConfiguration pcm_config{};
     if (!a2dp_get_selected_hal_pcm_config(&pcm_config)) {
@@ -636,6 +666,12 @@ bool setup_codec() {
     }
     pcm_config_global = pcm_config;
     audio_config.set<AudioConfiguration::pcmConfig>(pcm_config);
+
+    A2dpCodecConfig* a2dp_codec_configs = bta_av_get_a2dp_current_codec();
+    if (a2dp_codec_configs != nullptr) {
+      btav_a2dp_codec_config_t current_codec = a2dp_codec_configs->getCodecConfig();
+      sw_codec_type = current_codec.codec_type;
+    }
   }
 
   A2dpCodecConfig* a2dp_config = bta_av_get_a2dp_current_codec();
@@ -665,6 +701,7 @@ void end_session() {
     LOG(ERROR) << __func__ << "aidl: BluetoothAudio HAL is not enabled";
     return;
   }
+  sw_codec_type = BTAV_A2DP_CODEC_INDEX_SOURCE_MIN;
   active_hal_interface->EndSession();
   static_cast<A2dpTransport*>(active_hal_interface->GetTransportInstance())
       ->ResetPendingCmd();

@@ -290,6 +290,7 @@ void avdt_ccb_hdl_discover_cmd(tAVDT_CCB* p_ccb, tAVDT_CCB_EVT* p_data) {
   bool aptx_adaptive_support = false;
   bool ldac_support = false;
   bool aptx_tws_support = false;
+  bool lhdc_support = false;
   bool codecs_cached = false;
 
   AVDT_TRACE_WARNING("%s: soc_type: %d", __func__, soc_type);
@@ -364,6 +365,8 @@ void avdt_ccb_hdl_discover_cmd(tAVDT_CCB* p_ccb, tAVDT_CCB_EVT* p_data) {
          ldac_support = true;
        } else if (strcmp(tok,"aptX-TWS") == 0) {
          aptx_tws_support = true;
+       } else if (strncmp(tok,"LHDC", 4) == 0) {
+         lhdc_support = true;
        }
        tok = strtok_r(NULL, ",", &tmp_token);
       }
@@ -421,6 +424,12 @@ void avdt_ccb_hdl_discover_cmd(tAVDT_CCB* p_ccb, tAVDT_CCB_EVT* p_data) {
           APPL_TRACE_DEBUG("show support of LDAC");
         } else if ((strcmp(codec_name,"aptX-TWS") == 0) && aptx_tws_support) {
           APPL_TRACE_DEBUG("show support of aptx-tws");
+        } else if ((strncmp(codec_name,"LHDC", 4) == 0)) {
+          if (lhdc_support) {
+            APPL_TRACE_DEBUG("show support of lhdc");
+          } else {
+            APPL_TRACE_DEBUG("do not show support of lhdc");
+          }
         } else {
           continue;
         }

@@ -184,9 +184,26 @@ extern bool btif_av_is_tws_suspend_triggered(int index);
 extern bool btif_acm_check_in_call_tracker_timer_exist();
 extern void stop_stream_acm_initiator_now();
 
-
 extern bool bt_split_a2dp_sink_enabled;
 extern thread_t* get_sink_worker_thread();
+
+// Savitech LHDC_EXT_API -- START
+static int btif_a2dp_source_encoder_LHDC_user_ApiVer_retrieve_event(
+    const RawAddress& peer_address,
+    const char *version, const int clen);
+
+static int btif_a2dp_source_encoder_LHDC_user_config_retrieve_event(
+    const RawAddress& peer_address,
+    const char *config, const int clen);
+
+static int btif_a2dp_source_encoder_LHDC_user_config_update_event(
+    const RawAddress& peer_address,
+    const char *config, const int clen);
+
+static void btif_a2dp_source_encoder_LHDC_user_data_update_event(
+    const RawAddress& peer_address,
+    const char *data, const int clen);
+// Savitech LHDC_EXT_API -- END
 
 static char a2dp_hal_imp[PROPERTY_VALUE_MAX] = "false";
 UNUSED_ATTR static const char* dump_media_event(uint16_t event) {
@@ -1111,15 +1128,34 @@ static void btif_a2dp_source_audio_handle_timer(UNUSED_ATTR void* context) {
 static uint32_t btif_a2dp_source_read_callback(uint8_t* p_buf, uint32_t len) {
   uint16_t event;
   uint32_t bytes_read = 0;
-  if (btif_a2dp_source_is_hal_v2_supported()) {
+
+  uint32_t bytes_offset = 0;
+  uint32_t len_read = len;
+  uint32_t timeout_cnt = 0;
+
+  while (true) {
+
+    if (btif_a2dp_source_is_hal_v2_supported()) {
 #if AHIM_ENABLED
-    bytes_read = btif_ahim_read(p_buf, len);
+      bytes_read = btif_ahim_read(p_buf + bytes_offset, len_read);
 #else
-    bytes_read = bluetooth::audio::a2dp::read(p_buf, len);
+      bytes_read = bluetooth::audio::a2dp::read(p_buf + bytes_offset, len_read);
 #endif
-  } else {
-    bytes_read = UIPC_Read(UIPC_CH_ID_AV_AUDIO, &event, p_buf, len);
+    } else {
+      bytes_read = UIPC_Read(UIPC_CH_ID_AV_AUDIO, &event, p_buf + bytes_offset, len_read);
+    }
+
+    // Savitech LHDC -- Low Latency Mode
+    bytes_offset += bytes_read;
+    len_read -= bytes_read;
+    timeout_cnt++;
+    if (len_read <= 0 || timeout_cnt >= 5) {
+        bytes_read = bytes_offset;
+        break;
+    }
+    usleep(1000);
   }
+
   if (bytes_read < len) {
     LOG_WARN(LOG_TAG, "%s: UNDERFLOW: ONLY READ %d BYTES OUT OF %d", __func__,
              bytes_read, len);
@@ -1702,8 +1738,8 @@ bool btif_a2dp_source_restart_session(const RawAddress& old_peer_address,
 #endif
   LOG_ERROR(LOG_TAG,
     "%s: old_peer_address=%s new_peer_address=%s is_streaming=%d "
-    "state=%d", __func__, old_peer_address.ToString().c_str(),
-    new_peer_address.ToString().c_str(), is_streaming, btif_a2dp_source_state);
+    "state=%d, session_type %d", __func__, old_peer_address.ToString().c_str(),
+    new_peer_address.ToString().c_str(), is_streaming, btif_a2dp_source_state, session_type);
 
   CHECK(!new_peer_address.IsEmpty());
 
@@ -2156,3 +2192,74 @@ thread_t* get_worker_thread() {
   }
 }
 
+
+//
+// Savitech LHDC_EXT_API -- START
+//
+// LHDC extended API: get API revision
+int btif_a2dp_source_encoder_LHDC_user_ApiVer_retrieve_req(
+    const RawAddress& peer_address,
+    const char *version, const int clen) {
+
+  return btif_a2dp_source_encoder_LHDC_user_ApiVer_retrieve_event(peer_address, version, clen);
+}
+static int btif_a2dp_source_encoder_LHDC_user_ApiVer_retrieve_event(
+    const RawAddress& peer_address,
+    const char *version, const int clen) {
+
+  return bta_av_co_get_codec_LHDC_user_ApiVer(peer_address, version, clen);
+}
+
+// LHDC extended API: get config
+int btif_a2dp_source_encoder_LHDC_user_config_retrieve_req(
+    const RawAddress& peer_address,
+    const char *config, const int clen) {
+
+  return btif_a2dp_source_encoder_LHDC_user_config_retrieve_event(peer_address, config, clen);
+}
+static int btif_a2dp_source_encoder_LHDC_user_config_retrieve_event(
+    const RawAddress& peer_address,
+    const char *config, const int clen) {
+
+  return bta_av_co_get_codec_LHDC_user_config(peer_address, config, clen);
+}
+
+// LHDC extended API: set config
+int btif_a2dp_source_encoder_LHDC_user_config_update_req(
+    const RawAddress& peer_address,
+    const char *config, const int clen) {
+
+  return btif_a2dp_source_encoder_LHDC_user_config_update_event(peer_address, config, clen);
+}
+static int btif_a2dp_source_encoder_LHDC_user_config_update_event(
+    const RawAddress& peer_address,
+    const char *config, const int clen) {
+
+  return bta_av_co_set_codec_LHDC_user_config(peer_address, config, clen);
+}
+
+// LHDC extended API: set user data
+void btif_a2dp_source_encoder_LHDC_user_data_update_req(
+    uint16_t event, char* p_param){
+
+  btif_av_codec_lhdc_api_data_t *pData;
+  pData = (btif_av_codec_lhdc_api_data_t *) p_param;
+  RawAddress peer_address;
+  memcpy(&peer_address, &(pData->bd_addr), sizeof(RawAddress) );
+  char *data = pData->pData;
+  int clen = pData->clen;
+  btif_a2dp_source_encoder_LHDC_user_data_update_event(peer_address, data, clen);
+
+
+  //TODO: Do it like btif_a2dp_source_encoder_user_config_update_req?
+  //btif_a2dp_source_thread.DoInThread(
+  //    FROM_HERE, base::Bind(&btif_a2dp_source_encoder_LHDC_user_data_update_event,
+  //        peer_address, data, clen));
+}
+static void btif_a2dp_source_encoder_LHDC_user_data_update_event(
+    const RawAddress& peer_address,
+    const char *data, const int clen) {
+
+  bta_av_co_set_codec_LHDC_user_data(peer_address, data, clen);
+}
+// Savitech LHDC_EXT_API -- END

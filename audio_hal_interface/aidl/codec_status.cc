@@ -251,7 +251,6 @@ AptxAdaptiveChannelMode AptxAdaptiveCodecToHalChannelMode(
    }
 }
 
-
 LdacQualityIndex a2dp_codec_to_hal_ldac_quality_index (
     const btav_a2dp_codec_config_t& a2dp_codec_config) {
   switch (a2dp_codec_config.codec_specific_1) {
@@ -494,6 +493,15 @@ bool a2dp_is_audio_codec_config_params_changed_aidl(
       }
       break;
     }*/
+    case BTAV_A2DP_CODEC_INDEX_SOURCE_LHDCV2:
+      [[fallthrough]];
+    case BTAV_A2DP_CODEC_INDEX_SOURCE_LHDCV3:
+      [[fallthrough]];
+    case BTAV_A2DP_CODEC_INDEX_SOURCE_LHDCV5:
+      changed = true;
+      LOG(ERROR) << __func__
+                 << ": Consider changed to LHDC from " << (int) codec_config->codecType;
+      break;
     case BTAV_A2DP_CODEC_INDEX_MAX:
       [[fallthrough]];
     default:
@@ -863,6 +871,12 @@ bool A2dpAptxAdaptiveToHalConfig(CodecConfiguration* codec_config,
 
   codec_config->config.set<CodecConfiguration::CodecSpecific::aptxAdaptiveConfig>(
      aptxAdaptiveConfig);
+  return true;
+}
+
+// Savitech Patch - START (non-Offload only)
+bool A2dpLhdcv5ToHalConfig(CodecConfiguration* codec_config,
+                           A2dpCodecConfig* a2dp_config) {
   return true;
 }
 
