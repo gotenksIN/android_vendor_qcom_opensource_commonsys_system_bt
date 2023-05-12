@@ -190,7 +190,6 @@ cc_test {
     shared_libs: [
         "liblog",
         "libprotobuf-cpp-lite",
-        "android.hardware.bluetooth.audio-V3-ndk",
         "android.hardware.audio.common-V1-ndk",
     ],
     static_libs: [
