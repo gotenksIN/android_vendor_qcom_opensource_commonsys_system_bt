@@ -190,7 +190,7 @@ cc_test {
     shared_libs: [
         "liblog",
         "libprotobuf-cpp-lite",
-        "android.hardware.audio.common-V1-ndk",
+        "android.hardware.audio.common-V2-ndk",
     ],
     static_libs: [
         "libbtcore_qti",

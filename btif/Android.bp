@@ -154,7 +154,7 @@ cc_library_static {
         "vendor.qti.hardware.bluetooth_audio@2.1",
         "android.hardware.bluetooth.audio@2.0",
         "android.hardware.bluetooth.audio@2.1",
-        "android.hardware.audio.common-V1-ndk",
+        "android.hardware.audio.common-V2-ndk",
         "vendor.qti.hardware.bluetooth.audio-V1-ndk",
         "libhidlbase",
         "libutils",

@@ -98,7 +98,7 @@ cc_library_shared {
         "vendor.qti.hardware.bluetooth_audio@2.1",
         "android.hardware.bluetooth.audio-V3-ndk",
         "libbinder_ndk",
-        "android.hardware.audio.common-V1-ndk",
+        "android.hardware.audio.common-V2-ndk",
         "vendor.qti.hardware.bluetooth.audio-V1-ndk",
         "libaaudio",
         "libcutils",
