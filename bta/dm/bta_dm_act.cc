@@ -5884,12 +5884,9 @@ static void bta_dm_gattc_callback(tBTA_GATTC_EVT event, tBTA_GATTC* p_data) {
         if (p_data->search_cmpl.status == 0) {
           if (is_remote_support_adv_audio(bta_dm_search_cb.adv_le_bdaddr)) {
             bta_dm_reset_adv_audio_gatt_disc_prog(bta_dm_search_cb.adv_le_bdaddr);
-            if(!is_gatt_encryption_pending(bta_dm_search_cb.adv_le_bdaddr)) {
-              APPL_TRACE_DEBUG("continue with LEA search as encr completed");
-              bta_get_adv_audio_role(bta_dm_search_cb.adv_le_bdaddr,
-                  p_data->search_cmpl.conn_id,
-                  p_data->search_cmpl.status);
-            }
+            bta_get_adv_audio_role(bta_dm_search_cb.adv_le_bdaddr,
+                p_data->search_cmpl.conn_id,
+                p_data->search_cmpl.status);
           }
           if (is_adv_audio_group_supported(bta_dm_search_cb.adv_le_bdaddr,
                p_data->search_cmpl.conn_id)) {
@@ -6070,12 +6067,9 @@ static void bta_dm_le_gattc_callback(tBTA_GATTC_EVT event, tBTA_GATTC* p_data) {
         bta_adv_audio_update_bond_db(bta_dm_le_gatt_cb.peer_address, GATT_TRANSPORT_LE);
 
         if (p_data->search_cmpl.status == 0) {
-          if(!is_gatt_encryption_pending(bta_dm_le_gatt_cb.peer_address)) {
-            APPL_TRACE_DEBUG("continue with LEA search as encr completed");
-            bta_get_adv_audio_role(bta_dm_le_gatt_cb.peer_address,
-                p_data->search_cmpl.conn_id,
-                p_data->search_cmpl.status);
-          }
+          bta_get_adv_audio_role(bta_dm_le_gatt_cb.peer_address,
+              p_data->search_cmpl.conn_id,
+              p_data->search_cmpl.status);
           if (is_adv_audio_group_supported(bta_dm_le_gatt_cb.peer_address,
                 p_data->search_cmpl.conn_id)) {
             bta_find_adv_audio_group_instance(p_data->search_cmpl.conn_id,
