@@ -1510,7 +1510,9 @@ void smp_process_io_response(tSMP_CB* p_cb, tSMP_INT_DATA* p_data) {
           break;
         case SMP_OOB_UNKNOWN:
           SMP_TRACE_ERROR("SMP_MODEL_SEC_CONN_OOB with SMP_OOB_UNKNOWN");
-          smp_send_pair_fail(p_cb, NULL);
+          tSMP_INT_DATA smp_int_data = {0};
+          smp_int_data.status = SMP_PAIR_AUTH_FAIL;
+          smp_send_pair_fail(p_cb, &smp_int_data);
           return;
       }
     }

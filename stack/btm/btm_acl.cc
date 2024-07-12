@@ -1067,7 +1067,7 @@ void btm_read_remote_version_complete(uint8_t* p) {
           bool skip_caching_enable = false;
           BD_NAME bd_name;
           if (BTM_GetRemoteDeviceName(p_acl_cb->remote_addr, bd_name)) {
-            if (interop_database_match_name(INTEROP_SKIP_ROBUST_CACHING_READ, (char*) bd_name)) {
+            if ((interop_database_match_name(INTEROP_SKIP_ROBUST_CACHING_READ, (char*) bd_name)) || (interop_database_match_addr(INTEROP_SKIP_ROBUST_CACHING_READ, &(p_acl_cb->remote_addr)))) {
               skip_caching_enable = true;
             }
           }

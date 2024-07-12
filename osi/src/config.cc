@@ -676,8 +676,7 @@ static bool config_parse(FILE* fp, config_t* config) {
         (line[MAX_BUF - 1] != '\n')) {
       line_new = line_ptr;
       while (fgets(line, sizeof(line), fp)) {
-        line_ptr = trim(line);
-        line_new.append(line_ptr);
+        line_new.append(line);
 
         //stop reading if '\n' or EOF is reached
         if (strlen(line) == 0 || line[strlen(line) - 1] == '\n' ||
@@ -685,6 +684,7 @@ static bool config_parse(FILE* fp, config_t* config) {
           break;
       }
       line_ptr = &line_new[0];
+      line_ptr = trim(line_ptr);
     }
     ++line_num;
 

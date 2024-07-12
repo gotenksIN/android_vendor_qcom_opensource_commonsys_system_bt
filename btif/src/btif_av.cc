@@ -2108,7 +2108,7 @@ static bool btif_av_state_opened_handler(btif_sm_event_t event, void* p_data,
 
       if (bt_split_a2dp_sink_enabled &&
           (btif_av_cb[index].peer_sep == AVDT_TSEP_SRC)) {
-        btif_av_sink_config_req_t req;
+        btif_av_sink_config_req_t req = {};
         uint8_t* a2dp_codec_config =
            bta_av_co_get_peer_codec_info(btif_av_cb[index].bta_handle);
         if (a2dp_codec_config != NULL) {

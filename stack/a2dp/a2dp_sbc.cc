@@ -726,7 +726,7 @@ int A2DP_GetSamplingFrequencyCodeSbc(const uint8_t* p_codec_info) {
 }
 
 int A2DP_GetBitsPerSampleSbc(const uint8_t* p_codec_info) {
-  tA2DP_SBC_CIE sbc_cie;
+  tA2DP_SBC_CIE sbc_cie = {};
 
   tA2DP_STATUS a2dp_status = A2DP_ParseInfoSbc(&sbc_cie, p_codec_info, true);
   if (a2dp_status != A2DP_SUCCESS) {

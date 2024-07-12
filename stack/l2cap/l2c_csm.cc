@@ -408,7 +408,7 @@ static void l2c_csm_closed(tL2C_CCB* p_ccb, uint16_t event, void* p_data) {
             = p_ccb->p_rcb->coc_api.pL2CA_CocConnectCfm_Cb;
         RawAddress p_bd_addr = p_ccb->p_lcb->remote_bd_addr;
         l2cu_release_coc_ccbs(p_ccb);
-        (*coc_connect_cfm)(p_bd_addr, &chmap_info, 0, p_ci->l2cap_result,
+        (*coc_connect_cfm)(p_bd_addr, &chmap_info, 0, L2CAP_CONN_TIMEOUT,
                     L2CAP_CONN_TIMEOUT);
       }
       break;

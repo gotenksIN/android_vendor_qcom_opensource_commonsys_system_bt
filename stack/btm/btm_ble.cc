@@ -633,8 +633,13 @@ void BTM_ReadDevInfo(const RawAddress& remote_bda, tBT_DEVICE_TYPE* p_dev_type,
       *p_dev_type = BT_DEVICE_TYPE_BLE;
       *p_addr_type = p_dev_rec->ble.ble_addr_type;
     } else /* matching static adddress only */
-    {
-      *p_dev_type = BT_DEVICE_TYPE_BREDR;
+    { 
+      if (p_dev_rec->device_type) {
+        *p_dev_type = p_dev_rec->device_type;
+      }else {
+        BTM_TRACE_DEBUG("device_type not set; assuming BR/EDR");
+        *p_dev_type = BT_DEVICE_TYPE_BREDR;
+      }
       *p_addr_type = BLE_ADDR_PUBLIC;
     }
   }

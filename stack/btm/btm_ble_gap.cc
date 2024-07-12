@@ -501,6 +501,7 @@ tBTM_STATUS BTM_BleObserve(bool start, uint8_t duration,
                            tBTM_INQ_RESULTS_CB* p_results_cb,
                            tBTM_CMPL_CB* p_cmpl_cb) {
   tBTM_BLE_INQ_CB* p_inq = &btm_cb.ble_ctr_cb.inq_var;
+  tBTM_LE_RANDOM_CB* p_cb = &btm_cb.ble_ctr_cb.addr_mgnt_cb;
   tBTM_STATUS status = BTM_WRONG_MODE;
   uint8_t i=0;
   std::vector<uint16_t> scan_interval = {BTM_BLE_GAP_DISC_SCAN_WIN, BTM_BLE_GAP_DISC_SCAN_WIN};
@@ -564,6 +565,15 @@ tBTM_STATUS BTM_BleObserve(bool start, uint8_t duration,
         period_ms_t duration_ms = duration * 1000;
         alarm_set_on_mloop(btm_cb.ble_ctr_cb.observer_timer, duration_ms,
                            btm_ble_observer_timer_timeout, NULL);
+      }
+      if(BTM_BLE_IS_SCAN_ACTIVE(btm_cb.ble_ctr_cb.scan_activity) && !alarm_is_scheduled(p_cb->refresh_raddr_timer)) {
+        /* start a periodical timer to refresh random addr */
+        uint64_t interval_ms = btm_get_next_private_addrress_interval_ms();
+#if (BTM_BLE_CONFORMANCE_TESTING == TRUE)
+        interval_ms = btm_cb.ble_ctr_cb.rpa_tout * 1000;
+#endif
+        alarm_set_on_mloop(p_cb->refresh_raddr_timer, interval_ms,
+                     btm_ble_refresh_raddr_timer_timeout, NULL);
       }
     }
   } else if (BTM_BLE_IS_OBS_ACTIVE(btm_cb.ble_ctr_cb.scan_activity)) {
