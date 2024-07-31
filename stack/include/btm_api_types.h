@@ -268,7 +268,7 @@ typedef uint8_t(tBTM_FILTER_CB)(const RawAddress& bd_addr, DEV_CLASS dc);
 
 /* 0x00 is used as unclassified for all minor device classes */
 #define BTM_COD_MINOR_UNCLASSIFIED 0x00
-
+#define BTM_COD_MINOR_WEARABLE_HEADSET 0x04
 /* minor device class field for Computer Major Class */
 /* #define BTM_COD_MINOR_UNCLASSIFIED       0x00    */
 #define BTM_COD_MINOR_DESKTOP_WORKSTATION 0x04
@@ -399,6 +399,7 @@ typedef uint8_t(tBTM_FILTER_CB)(const RawAddress& bd_addr, DEV_CLASS dc);
  * service class fields
  ***************************/
 #define BTM_COD_SERVICE_LMTD_DISCOVER 0x0020
+#define BTM_COD_SERVICE_LE_AUDIO 0x0040
 #define BTM_COD_SERVICE_POSITIONING 0x0100
 #define BTM_COD_SERVICE_NETWORKING 0x0200
 #define BTM_COD_SERVICE_RENDERING 0x0400

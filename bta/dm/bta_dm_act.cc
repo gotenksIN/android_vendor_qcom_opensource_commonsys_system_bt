@@ -352,6 +352,7 @@ uint8_t g_disc_raw_data_buf[MAX_DISC_RAW_DATA_BUF];
 
 extern DEV_CLASS local_device_default_class;
 
+
 // Stores the local Input/Output Capabilities of the Bluetooth device.
 static uint8_t btm_local_io_caps;
 
@@ -1134,6 +1135,7 @@ void bta_dm_remove_device(tBTA_DM_MSG* p_data) {
     LOG(INFO) << "Last paired device removed, resetting IRK";
     btm_ble_reset_id();
   }
+
 }
 
 /*******************************************************************************
@@ -5857,8 +5859,10 @@ static void bta_dm_gattc_callback(tBTA_GATTC_EVT event, tBTA_GATTC* p_data) {
   switch (event) {
     case BTA_GATTC_OPEN_EVT:
 #ifdef ADV_AUDIO_FEATURE
+      bta_dm_search_cb.adv_le_bdaddr = bta_dm_search_cb.peer_bdaddr;
+      bta_dm_le_gatt_cb.is_lea_device = false;
+      bta_dm_le_gatt_cb.disc_progress = false;
       if (is_remote_support_adv_audio(bta_dm_search_cb.peer_bdaddr)) {
-        bta_dm_search_cb.adv_le_bdaddr = bta_dm_search_cb.peer_bdaddr;
         bta_dm_set_adv_audio_dev_info(&p_data->open);
         uint8_t sec_flag = 0;
         BTM_GetSecurityFlagsByTransport(p_data->open.remote_bda, &sec_flag, BT_TRANSPORT_LE);
@@ -5869,14 +5873,41 @@ static void bta_dm_gattc_callback(tBTA_GATTC_EVT event, tBTA_GATTC* p_data) {
          p_data->open.remote_bda.ToString().c_str());
          proc_open_evt = false;
         }
+        bta_dm_le_gatt_cb.disc_progress = true;
+        bta_dm_le_gatt_cb.is_lea_device = true;
+      } else {
+        bta_dm_le_gatt_cb.is_lea_device = false;
       }
 #endif
+      APPL_TRACE_ERROR(" %s  is_lea_device %d disc_progress %d", __func__, bta_dm_le_gatt_cb.is_lea_device,
+                      bta_dm_le_gatt_cb.disc_progress);
       //TODO reset the discovery parameters before triggering it open evt
       if (proc_open_evt)
         bta_dm_proc_open_evt(&p_data->open);
       break;
 
     case BTA_GATTC_SEARCH_RES_EVT:
+      APPL_TRACE_ERROR(" bta_dm_gattc_callback is_lea_device %d", bta_dm_le_gatt_cb.is_lea_device);
+      if (!bta_dm_le_gatt_cb.is_lea_device) {
+        if (is_le_audio_service(p_data->srvc_res.service_uuid.uuid)) {
+          APPL_TRACE_ERROR(" bta_dm_gattc_callback LE AUDIO UUID");
+          bta_dm_le_gatt_cb.is_lea_device = true;
+          bta_dm_le_gatt_cb.disc_progress = false;
+          //This remote supports LE AUDIO. So reuse LE AUDIO API's to derive role
+          btif_store_adv_audio_pair_info(bta_dm_search_cb.peer_bdaddr);
+          bta_dm_update_adv_audio_db(bta_dm_search_cb.peer_bdaddr);
+          RawAddress id_addr =
+            btif_get_map_address(bta_dm_search_cb.peer_bdaddr);
+          if ((id_addr != RawAddress::kEmpty) && (id_addr !=
+                bta_dm_search_cb.peer_bdaddr)) {
+            APPL_TRACE_DEBUG(" bta_dm_gattc_callback Storing ID_ADDR %s",
+                            id_addr.ToString().c_str());
+            btif_store_adv_audio_pair_info(id_addr);
+            bta_dm_update_adv_audio_db(id_addr);
+            bta_dm_ble_adv_audio_idaddr_map(bta_dm_search_cb.peer_bdaddr, id_addr);
+          }
+        }
+      }
 #ifdef ADV_AUDIO_FEATURE
       if (is_remote_support_adv_audio(bta_dm_search_cb.adv_le_bdaddr)) {
         bta_add_adv_audio_uuid(bta_dm_search_cb.adv_le_bdaddr,
@@ -5893,6 +5924,18 @@ static void bta_dm_gattc_callback(tBTA_GATTC_EVT event, tBTA_GATTC* p_data) {
 #ifdef ADV_AUDIO_FEATURE
         if (p_data->search_cmpl.status == 0) {
           if (is_remote_support_adv_audio(bta_dm_search_cb.adv_le_bdaddr)) {
+            if (!bta_dm_le_gatt_cb.disc_progress) {
+              APPL_TRACE_DEBUG(" bta_dm_le_gattc_callback LE AUDIO ROLE DISC");
+              //This remote supports LE AUDIO. So reuse LE AUDIO API's to derive role
+              tBTA_GATTC_OPEN p_tmp_data;
+              p_tmp_data.remote_bda = bta_dm_search_cb.adv_le_bdaddr;
+              p_tmp_data.conn_id = p_data->search_cmpl.conn_id;
+              p_tmp_data.transport = BT_TRANSPORT_LE;
+              bta_dm_le_gatt_cb.disc_progress = true;
+              bta_dm_set_adv_audio_dev_info(&p_tmp_data);
+              bta_adv_audio_update_bond_db(bta_dm_search_cb.adv_le_bdaddr, GATT_TRANSPORT_LE);
+
+            }
             bta_dm_reset_adv_audio_gatt_disc_prog(bta_dm_search_cb.adv_le_bdaddr);
             if(!is_gatt_encryption_pending(bta_dm_search_cb.adv_le_bdaddr)) {
               APPL_TRACE_DEBUG("continue with LEA search as encr completed");
@@ -5902,7 +5945,7 @@ static void bta_dm_gattc_callback(tBTA_GATTC_EVT event, tBTA_GATTC* p_data) {
             }
           }
           if (is_adv_audio_group_supported(bta_dm_search_cb.adv_le_bdaddr,
-               p_data->search_cmpl.conn_id)) {
+                p_data->search_cmpl.conn_id)) {
             bta_find_adv_audio_group_instance(p_data->search_cmpl.conn_id,
                 p_data->search_cmpl.status, bta_dm_search_cb.adv_le_bdaddr);
           }
@@ -5910,6 +5953,7 @@ static void bta_dm_gattc_callback(tBTA_GATTC_EVT event, tBTA_GATTC* p_data) {
           APPL_TRACE_DEBUG("%s Discovery Failure ", __func__);
           if (is_remote_support_adv_audio(bta_dm_search_cb.adv_le_bdaddr))
             bta_dm_reset_adv_audio_gatt_disc_prog(bta_dm_search_cb.adv_le_bdaddr);
+            bta_dm_le_gatt_cb = {};
             bta_le_audio_service_search_failed(&bta_dm_search_cb.adv_le_bdaddr);
         }
 #endif
@@ -5926,12 +5970,13 @@ static void bta_dm_gattc_callback(tBTA_GATTC_EVT event, tBTA_GATTC* p_data) {
           bta_dm_search_cb.conn_id = GATT_INVALID_CONN_ID;
 #ifdef ADV_AUDIO_FEATURE
       if (is_remote_support_adv_audio(p_data->close.remote_bda)) {
+        bta_dm_le_gatt_cb = {};
         if (is_gatt_srvc_disc_pending(p_data->close.remote_bda)) {
           bta_le_audio_service_search_failed(&p_data->close.remote_bda);
         } else if (bta_adv_audio_role_disc_progress(p_data->close.remote_bda)) {
           APPL_TRACE_ERROR("BTA_GATTC_CLOSE_EVT called during discovery under progress");
           bta_le_audio_service_search_failed(&p_data->close.remote_bda);
-        }else {
+        } else {
           bta_dm_reset_adv_audio_dev_info(p_data->close.remote_bda);
         }
       }

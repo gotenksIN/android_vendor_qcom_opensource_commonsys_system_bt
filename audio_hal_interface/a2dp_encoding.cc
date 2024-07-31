@@ -181,7 +181,7 @@ class A2dpTransport : public ::bluetooth::audio::IBluetoothTransportInstance {
       LOG(WARNING) << __func__ << ": Not active";
       return false;
     }
-    *remote_delay_report = remote_delay_report_;
+    *remote_delay_report = remote_delay_report_ * 100000ULL;
     *total_bytes_read = total_bytes_read_;
     *data_position = data_position_;
     VLOG(2) << __func__ << ": delay=" << remote_delay_report_
@@ -309,7 +309,7 @@ class A2dpTransport_2_1 : public ::bluetooth::audio::IBluetoothTransportInstance
       LOG(WARNING) << __func__ << ": Not active";
       return false;
     }
-    *remote_delay_report = remote_delay_report_;
+    *remote_delay_report = remote_delay_report_ * 100000ULL;
     *total_bytes_read = total_bytes_read_;
     *data_position = data_position_;
     VLOG(2) << __func__ << ": delay=" << remote_delay_report_
@@ -3063,7 +3063,7 @@ void set_remote_delay(uint16_t delay_report) {
   LOG(INFO) << __func__ << ": DELAY " << static_cast<float>(delay_report / 10.0)
             << " ms";
   session_params.paramType = SessionParamType::SINK_LATENCY;
-  session_params.param.sinkLatency = {delay_report, 0x00, {}};
+  session_params.param.sinkLatency = {delay_report * 100000ULL, 0x00, {}};
   if (a2dp_sink_2_1)
     a2dp_sink_2_1->SetRemoteDelay(delay_report);
   else

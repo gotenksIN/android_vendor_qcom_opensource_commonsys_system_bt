@@ -1448,6 +1448,14 @@ void btm_ble_periodic_adv_sync_established(uint8_t *param, uint16_t param_len) {
   ps->sync_state = PERIODIC_SYNC_ESTABLISHED;
   ps->sync_start_cb.Run(status, sync_handle, adv_sid,
                                    address_type, addr, phy, interval);
+  if (status != BTM_SUCCESS) {
+    BTM_TRACE_WARNING("[PSync]%s: PA sync fails, erase psync slot, index=%d", __func__, index);
+    ps->sync_state =  PERIODIC_SYNC_IDLE;
+    ps->in_use = false;
+    ps->remote_bda =  RawAddress::kEmpty;
+    ps->sid = 0;
+    ps->sync_handle = 0;
+  }
   btm_sync_queue_advance();
 }
 
@@ -2827,6 +2835,15 @@ static void btm_ble_appearance_to_cod(uint16_t appearance, uint8_t* dev_class) {
       dev_class[1] = BTM_COD_MAJOR_AUDIO;
       dev_class[2] = BTM_COD_MINOR_UNCLASSIFIED;
       break;
+    case BTM_BLE_APPEARANCE_GENERIC_WEARABLE_AUDIO_DEVICE:
+    case BTM_BLE_APPEARANCE_WEARABLE_AUDIO_DEVICE_EARBUD:
+    case BTM_BLE_APPEARANCE_WEARABLE_AUDIO_DEVICE_HEADSET:
+    case BTM_BLE_APPEARANCE_WEARABLE_AUDIO_DEVICE_HEADPHONES:
+    case BTM_BLE_APPEARANCE_WEARABLE_AUDIO_DEVICE_NECK_BAND:
+      dev_class[0] = (BTM_COD_SERVICE_AUDIO | BTM_COD_SERVICE_RENDERING) >> 8;
+      dev_class[1] = (BTM_COD_MAJOR_AUDIO | BTM_COD_SERVICE_LE_AUDIO);
+      dev_class[2] = BTM_COD_MINOR_WEARABLE_HEADSET;
+      break;
     case BTM_BLE_APPEARANCE_GENERIC_BARCODE_SCANNER:
     case BTM_BLE_APPEARANCE_HID_BARCODE_SCANNER:
     case BTM_BLE_APPEARANCE_GENERIC_HID:
@@ -2998,11 +3015,13 @@ void btm_ble_update_inq_result(tINQ_DB_ENT* p_i, uint8_t addr_type,
           if (controller_get_interface()->is_adv_audio_supported()) {
             if (((p_uuid16[i] | (p_uuid16[i + 1] << 8)) == UUID_SERVCLASS_ADV_AUDIO_CONN)
                 || ((p_uuid16[i] | (p_uuid16[i + 1] << 8)) == UUID_SERVCLASS_ADV_AUDIO_CONN_LESS)) {
-              VLOG(1) << __func__ << " updated to ADV AUDIO COD PROP";
-              p_cur->dev_class[0] = 0;
-              p_cur->dev_class[1] = BTM_COD_MAJOR_ADV_AUDIO;
-              p_cur->dev_class[2] = 0;
-              break;
+              if ((p_cur->dev_class[1] & BTM_COD_MAJOR_ADV_AUDIO) != BTM_COD_MAJOR_ADV_AUDIO){
+                  VLOG(1) << __func__ << " updated to ADV AUDIO COD PROP";
+                  p_cur->dev_class[0] = 0;
+                  p_cur->dev_class[1] = BTM_COD_MAJOR_ADV_AUDIO;
+                  p_cur->dev_class[2] = 0;
+                 break;
+              }
             }
           }
 #endif
@@ -3015,7 +3034,7 @@ void btm_ble_update_inq_result(tINQ_DB_ENT* p_i, uint8_t addr_type,
     if (controller_get_interface()->is_adv_audio_supported()) {
       /* if this BLE device support ADV AUDIO over LE, set ADV AUDIO Major
        * in class of device */
-      if (is_adv_audio_support) {
+      if (is_adv_audio_support && ((p_cur->dev_class[1] & BTM_COD_MAJOR_ADV_AUDIO) != BTM_COD_MAJOR_ADV_AUDIO)) {
         VLOG(1) << __func__ << " updated to ADV AUDIO COD PROP";
         p_cur->dev_class[0] = 0;
         p_cur->dev_class[1] = BTM_COD_MAJOR_ADV_AUDIO;

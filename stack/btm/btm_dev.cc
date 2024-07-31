@@ -526,7 +526,7 @@ void btm_consolidate_dev(tBTM_SEC_DEV_REC* p_target_rec) {
     }
 
     /* an RPA device entry is a duplicate of the target record */
-    if (btm_ble_addr_resolvable(p_dev_rec->bd_addr, p_target_rec)) {
+    if (p_dev_rec && btm_ble_addr_resolvable(p_dev_rec->bd_addr, p_target_rec)) {
       if (p_target_rec->ble.pseudo_addr == p_dev_rec->bd_addr) {
         p_target_rec->ble.ble_addr_type = p_dev_rec->ble.ble_addr_type;
         p_target_rec->device_type |= p_dev_rec->device_type;

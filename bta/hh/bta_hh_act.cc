@@ -822,10 +822,9 @@ void bta_hh_open_failure(tBTA_HH_DEV_CB* p_cb, tBTA_HH_DATA* p_data) {
   (*bta_hh_cb.p_cback)(BTA_HH_OPEN_EVT, (tBTA_HH*)&conn_dat);
 
   /* if virtually unplug, remove device */
-  if (p_cb->vp ) {
+  if (p_cb->vp )
     HID_HostRemoveDev( p_cb->hid_handle);
-    bta_hh_clean_up_kdev(p_cb);
-  }
+  bta_hh_clean_up_kdev(p_cb);
 #if (BTA_HH_DEBUG == TRUE)
   bta_hh_trace_dev_db();
 #endif
@@ -906,10 +905,9 @@ void bta_hh_close_act(tBTA_HH_DEV_CB* p_cb, tBTA_HH_DATA* p_data) {
     (*bta_hh_cb.p_cback)(event, (tBTA_HH*)&disc_dat);
 
     /* if virtually unplug, remove device */
-    if (p_cb->vp) {
+    if (p_cb->vp)
       HID_HostRemoveDev(p_cb->hid_handle);
-      bta_hh_clean_up_kdev(p_cb);
-    }
+    bta_hh_clean_up_kdev(p_cb);
 
 #if (BTA_HH_DEBUG == TRUE)
     bta_hh_trace_dev_db();

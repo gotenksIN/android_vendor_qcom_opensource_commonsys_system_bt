@@ -88,6 +88,9 @@
 #include "osi/include/properties.h"
 #include "stack/gatt/gatt_int.h"
 
+#ifdef ADV_AUDIO_FEATURE
+#include "bta_dm_adv_audio.h"
+#endif
 
 #if (OFF_TARGET_TEST_ENABLED == TRUE)
 #include "bt_prop.h"
@@ -354,6 +357,7 @@ void bta_gattc_process_api_open(tBTA_GATTC_DATA* p_msg) {
             BTM_ReadDevInfo(bd_addr, &dev_type, &addr_type);
             bool addr_is_rpa = (addr_type == BLE_ADDR_RANDOM && BTM_BLE_IS_RESOLVE_BDA(bd_addr));
             LOG(INFO) << __func__ << " -- addr_is_rpa " << addr_is_rpa;
+            bta_dm_update_adv_audio_db(map_addr);
             if (addr_is_rpa) {
               dev_addr_map[p_msg->api_conn.client_if] = bd_addr;
               p_msg->api_conn.remote_bda = map_addr;
