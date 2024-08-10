@@ -254,9 +254,7 @@ void bta_hh_le_deregister(void) { BTA_GATTC_AppDeregister(bta_hh_cb.gatt_if); }
  *
  ******************************************************************************/
 bool bta_hh_is_le_device(tBTA_HH_DEV_CB* p_cb, const RawAddress& remote_bda) {
-  p_cb->is_le_device = BTM_UseLeLink(remote_bda);
-
-  return p_cb->is_le_device;
+  return BTM_UseLeLink(remote_bda);
 }
 
 /******************************************************************************

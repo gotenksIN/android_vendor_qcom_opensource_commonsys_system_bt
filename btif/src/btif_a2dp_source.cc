@@ -183,7 +183,7 @@ extern bool btif_av_is_tws_suspend_triggered(int index);
 
 extern bool btif_acm_check_in_call_tracker_timer_exist();
 extern void stop_stream_acm_initiator_now();
-
+extern bool btif_av_check_is_reconfig_pending_flag_set(RawAddress address);
 
 extern bool bt_split_a2dp_sink_enabled;
 extern thread_t* get_sink_worker_thread();
@@ -1780,13 +1780,19 @@ void btif_a2dp_update_sink_latency_change() {
     APPL_TRACE_EVENT("%s latency/delay value %d", __func__, sink_latency);
 #if AHIM_ENABLED
     btif_ahim_set_remote_delay(sink_latency, A2DP);
+    if (!btif_av_check_is_reconfig_pending_flag_set(btif_av_get_addr_by_index(idx))){
+       btif_ahim_setup_codec(A2DP);
+    }else{
+      APPL_TRACE_EVENT("%s reconfig is pending", __func__);
+    }
+
+
 #else
     bluetooth::audio::a2dp::set_remote_delay(sink_latency);
 #endif
   } else {
     btif_a2dp_audio_send_sink_latency();
   }
-  btif_ahim_setup_codec(A2DP);
 }
 
 void btif_a2dp_source_command_ack(tA2DP_CTRL_CMD cmd, tA2DP_CTRL_ACK status) {

@@ -1417,7 +1417,7 @@ void BTA_DmProcessQueuedServiceDiscovery(void) {
       if (p_data->discover.transport != BT_TRANSPORT_INVALID) {
         transport = p_data->discover.transport;
       }
-      if (BTM_IsAclConnectionUp(bda, transport)) {
+      if ((transport == BT_TRANSPORT_BR_EDR) || BTM_IsAclConnectionUp(bda, transport)) {
         bta_sys_sendmsg(p_data);
         break;
       }
