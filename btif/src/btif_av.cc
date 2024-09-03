@@ -5484,6 +5484,12 @@ static bt_status_t codec_config_source(const RawAddress& bd_addr,
   std::unique_lock<std::mutex> guard(isDevUiReq_mutex_);
   isDevUiReq = false;
   codec_cfg_change = false;
+
+  if (index >= btif_max_av_clients || index < 0) {
+    BTIF_TRACE_ERROR("%s(): Invalid index = %d",__func__, index);
+    return BT_STATUS_FAIL;
+  }
+
   for (auto cp : codec_preferences) {
     BTIF_TRACE_DEBUG(
         "%s: codec_type=%d codec_priority=%d "

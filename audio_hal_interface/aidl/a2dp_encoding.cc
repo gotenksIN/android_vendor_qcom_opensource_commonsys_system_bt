@@ -625,7 +625,8 @@ bool setup_codec() {
   }
 
   AudioConfiguration audio_config{};
-  if (active_hal_interface->GetTransportInstance()->GetSessionType() ==
+  if (active_hal_interface && active_hal_interface->GetTransportInstance() &&
+      active_hal_interface->GetTransportInstance()->GetSessionType() ==
       SessionType::A2DP_HARDWARE_OFFLOAD_ENCODING_DATAPATH) {
     audio_config.set<AudioConfiguration::a2dpConfig>(codec_config);
   } else {

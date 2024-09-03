@@ -464,6 +464,7 @@ void bta_hh_sdp_cmpl(tBTA_HH_DEV_CB* p_cb, tBTA_HH_DATA* p_data) {
     (*bta_hh_cb.p_cback)(BTA_HH_OPEN_EVT, (tBTA_HH*)&conn_dat);
 
     /* move state machine W4_CONN ->IDLE */
+    APPL_TRACE_WARNING("Device handle: [%d]", p_cb->hid_handle);
     bta_hh_sm_execute(p_cb, BTA_HH_API_CLOSE_EVT, NULL);
 
     /* if this is an outgoing connection to an unknown device, clean up cb */
@@ -1026,6 +1027,7 @@ void bta_hh_maint_dev_act(tBTA_HH_DEV_CB* p_cb, tBTA_HH_DATA* p_data) {
 #if (BTA_HH_LE_INCLUDED == TRUE)
       if (p_cb->is_le_device) {
         bta_hh_le_remove_dev_bg_conn(p_cb);
+        APPL_TRACE_WARNING("Device Handle: [%d]", p_cb->hid_handle);
         bta_hh_sm_execute(p_cb, BTA_HH_API_CLOSE_EVT, NULL);
         bta_hh_clean_up_kdev(p_cb);
       } else

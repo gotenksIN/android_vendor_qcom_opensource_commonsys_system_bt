@@ -433,7 +433,7 @@ bool l2c_link_hci_disc_comp(uint16_t handle, uint8_t reason) {
     if (btm_cb.acl_disc_reason != HCI_ERR_HOST_REJECT_SECURITY)
       btm_cb.acl_disc_reason = reason;
 
-    p_lcb->disc_reason = btm_cb.acl_disc_reason;
+    p_lcb->disc_reason = reason;
 
     /* Just in case app decides to try again in the callback context */
     p_lcb->link_state = LST_DISCONNECTING;

@@ -313,7 +313,11 @@ void bta_hh_sm_execute(tBTA_HH_DEV_CB* p_cb, uint16_t event,
 
             APPL_TRACE_WARNING("device handle: [%d]",
                                cback_data.dev_status.handle);
-            osi_free_and_reset((void**)&p_data);
+            if (p_data->api_disc.hdr.layer_specific != BTA_HH_INVALID_HANDLE) {
+              osi_free_and_reset((void**)&p_data);
+            } else {
+              APPL_TRACE_WARNING("Invalid device handle: [%d]", p_data->api_disc.hdr.layer_specific);
+            }
           }
           break;
 
@@ -325,7 +329,11 @@ void bta_hh_sm_execute(tBTA_HH_DEV_CB* p_cb, uint16_t event,
                 (uint8_t)p_data->api_get_dscp.hdr.layer_specific;
             APPL_TRACE_WARNING("device handle: [%d]",
                                cback_data.dev_status.handle);
-            osi_free_and_reset((void**)&p_data);
+            if (p_data->api_get_dscp.hdr.layer_specific != BTA_HH_INVALID_HANDLE) {
+              osi_free_and_reset((void**)&p_data);
+            } else {
+              APPL_TRACE_WARNING("Invalid Device Handle: [%d]", p_data->api_get_dscp.hdr.layer_specific);
+            }
           }
           break;
 

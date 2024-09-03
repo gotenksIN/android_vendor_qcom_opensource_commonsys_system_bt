@@ -920,15 +920,16 @@ static void btif_hh_upstreams_evt(uint16_t event, char* p_param) {
 
     case BTA_HH_GET_RPT_EVT: {
       BT_HDR* hdr = p_data->hs_data.rsp_data.p_rpt_data;
+      tBTA_HH_STATUS status = p_data->hs_data.status;
       uint8_t* data = NULL;
       uint16_t len = 0;
 
       BTIF_TRACE_DEBUG("BTA_HH_GET_RPT_EVT: status = %d, handle = %d",
-                       p_data->hs_data.status, p_data->hs_data.handle);
+                       status, p_data->hs_data.handle);
       p_dev = btif_hh_find_connected_dev_by_handle(p_data->hs_data.handle);
       if (p_dev) {
         /* p_rpt_data is NULL in HANDSHAKE response case */
-        if (hdr) {
+        if (status == BTA_HH_OK && hdr) {
           data = (uint8_t*)(hdr + 1) + hdr->offset;
           len = hdr->len;
           HAL_CBACK(bt_hh_callbacks, get_report_cb,
